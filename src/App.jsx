@@ -100,6 +100,7 @@ function App() {
             <ExportPanel
               targetId=".right-panel"
               title={exportTitle}
+              disabled={isRunning || !stats}
             />
           </div>
         </div>
