@@ -9,8 +9,16 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const QueueChartPanel = ({ queueData, utilData }) => {
-  if (!queueData || queueData.length === 0) {
+const QueueChartPanel = ({
+  currentQueueData,
+  currentUtilData,
+  currentName,
+  compareScenarios,
+}) => {
+  const hasData =
+    (currentQueueData && currentQueueData.length > 0) || compareScenarios.length > 0;
+
+  if (!hasData) {
     return (
       <div className="chart-panel">
         <h2>队列与坐席状态</h2>
@@ -19,17 +27,20 @@ const QueueChartPanel = ({ queueData, utilData }) => {
     );
   }
 
-  const combinedData = queueData.map((item, index) => ({
-    ...item,
-    utilization: utilData[index]?.utilization || 0,
-  }));
+  const mergedData = mergeQueueData(
+    currentQueueData,
+    currentUtilData,
+    currentName,
+    compareScenarios
+  );
+  const lineConfigs = buildQueueLineConfigs(currentName, compareScenarios);
 
   return (
     <div className="chart-panel">
       <h2>队列与坐席状态</h2>
       <div className="chart-container">
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={combinedData}>
+          <LineChart data={mergedData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis
               dataKey="time"
@@ -46,29 +57,106 @@ const QueueChartPanel = ({ queueData, utilData }) => {
             />
             <Tooltip />
             <Legend />
-            <Line
-              yAxisId="left"
-              type="monotone"
-              dataKey="queueLength"
-              stroke="#82ca9d"
-              name="队列长度"
-              strokeWidth={2}
-              dot={false}
-            />
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="utilization"
-              stroke="#ffc658"
-              name="坐席利用率"
-              strokeWidth={2}
-              dot={false}
-            />
+            {lineConfigs.map((config) => (
+              <Line
+                key={config.dataKey}
+                yAxisId={config.axis}
+                type="monotone"
+                dataKey={config.dataKey}
+                stroke={config.color}
+                name={config.name}
+                strokeWidth={config.isCurrent ? 3 : 2}
+                strokeDasharray={config.isCurrent ? '' : '5 5'}
+                dot={false}
+              />
+            ))}
           </LineChart>
         </ResponsiveContainer>
       </div>
     </div>
   );
+};
+
+const mergeQueueData = (currentQueueData, currentUtilData, currentName, compareScenarios) => {
+  const timeMap = new Map();
+
+  if (currentQueueData && currentQueueData.length > 0) {
+    currentQueueData.forEach((d, index) => {
+      timeMap.set(d.time, {
+        time: d.time,
+        [`current_queue_${currentName}`]: d.queueLength,
+        [`current_util_${currentName}`]: currentUtilData?.[index]?.utilization || 0,
+      });
+    });
+  }
+
+  compareScenarios.forEach((scenario) => {
+    if (scenario.queueLengthData) {
+      scenario.queueLengthData.forEach((d, index) => {
+        const existing = timeMap.get(d.time) || { time: d.time };
+        existing[`scenario_queue_${scenario.id}`] = d.queueLength;
+        existing[`scenario_util_${scenario.id}`] =
+          scenario.agentUtilData?.[index]?.utilization || 0;
+        timeMap.set(d.time, existing);
+      });
+    }
+  });
+
+  return Array.from(timeMap.values()).sort((a, b) => a.time - b.time);
+};
+
+const buildQueueLineConfigs = (currentName, compareScenarios) => {
+  const configs = [];
+
+  if (currentName) {
+    configs.push({
+      dataKey: `current_queue_${currentName}`,
+      name: `当前队列: ${currentName}`,
+      color: '#667eea',
+      axis: 'left',
+      isCurrent: true,
+    });
+    configs.push({
+      dataKey: `current_util_${currentName}`,
+      name: `当前利用率: ${currentName}`,
+      color: '#ffc658',
+      axis: 'right',
+      isCurrent: true,
+    });
+  }
+
+  compareScenarios.forEach((scenario) => {
+    configs.push({
+      dataKey: `scenario_queue_${scenario.id}`,
+      name: `${scenario.name} 队列`,
+      color: scenario.color,
+      axis: 'left',
+      isCurrent: false,
+    });
+    configs.push({
+      dataKey: `scenario_util_${scenario.id}`,
+      name: `${scenario.name} 利用率`,
+      color: mixColor(scenario.color, '#ffc658'),
+      axis: 'right',
+      isCurrent: false,
+    });
+  });
+
+  return configs;
+};
+
+const mixColor = (c1, c2) => {
+  const hex = (c) => parseInt(c.slice(1), 16);
+  const r1 = (hex(c1) >> 16) & 255;
+  const g1 = (hex(c1) >> 8) & 255;
+  const b1 = hex(c1) & 255;
+  const r2 = (hex(c2) >> 16) & 255;
+  const g2 = (hex(c2) >> 8) & 255;
+  const b2 = hex(c2) & 255;
+  const r = Math.round((r1 + r2) / 2);
+  const g = Math.round((g1 + g2) / 2);
+  const b = Math.round((b1 + b2) / 2);
+  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
 };
 
 export default QueueChartPanel;
