@@ -11,6 +11,23 @@
   margin-bottom: 30px;
 }
 
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header-title {
+  text-align: left;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .app-header h1 {
   font-size: 2.5rem;
   font-weight: 700;
@@ -339,5 +356,120 @@
 
 .stat-diff.diff-bad {
   color: #ff7c7c;
+}
+
+.export-panel {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-export {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  color: white;
+}
+
+.btn-export:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-export:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-png {
+  background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+}
+
+.btn-pdf {
+  background: linear-gradient(135deg, #ff7c7c 0%, #ee5a24 100%);
+}
+
+.sort-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.sort-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #555;
+}
+
+.sort-select {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  background: white;
+  cursor: pointer;
+  outline: none;
+}
+
+.sort-select:focus {
+  border-color: #667eea;
+}
+
+.scenario-item.recommended {
+  border-color: #ffc658;
+  background: linear-gradient(135deg, #fffbe6 0%, #fff7cc 100%);
+  position: relative;
+}
+
+.recommend-badge {
+  position: absolute;
+  top: -10px;
+  right: 12px;
+  background: linear-gradient(135deg, #ffa751 0%, #ffe259 100%);
+  color: #8b5a00;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(255, 167, 81, 0.4);
+}
+
+.score-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chart-header h2 {
+  margin-bottom: 0;
+}
+
+.chart-hint {
+  font-size: 0.85rem;
+  color: #ff7c7c;
+  font-weight: 500;
+  padding: 6px 12px;
+  background: #fff0f0;
+  border-radius: 6px;
+  border: 1px solid #ffd4d4;
 }
 

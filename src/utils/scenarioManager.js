@@ -66,3 +66,66 @@ export const formatDiff = (value, unit = '', isPercent = false) => {
     return `${sign}${(value / 3600).toFixed(2)}时`;
   }
 };
+
+export const sortScenarios = (scenarios, sortBy) => {
+  const sorted = [...scenarios];
+  switch (sortBy) {
+    case 'waitTime_asc':
+      sorted.sort((a, b) => a.stats.avgWaitTime - b.stats.avgWaitTime);
+      break;
+    case 'waitTime_desc':
+      sorted.sort((a, b) => b.stats.avgWaitTime - a.stats.avgWaitTime);
+      break;
+    case 'utilization_desc':
+      sorted.sort((a, b) => b.stats.avgUtilization - a.stats.avgUtilization);
+      break;
+    case 'utilization_asc':
+      sorted.sort((a, b) => a.stats.avgUtilization - b.stats.avgUtilization);
+      break;
+    case 'recommended':
+      sorted.sort((a, b) => calculateScore(b) - calculateScore(a));
+      break;
+    case 'created_desc':
+    default:
+      sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+  return sorted;
+};
+
+export const calculateScore = (scenario) => {
+  const { avgWaitTime, avgUtilization, maxQueueLength } = scenario.stats;
+  const waitScore = Math.max(0, 100 - avgWaitTime / 10);
+  const utilScore = Math.max(0, Math.min(100, (avgUtilization - 50) * 2));
+  const queueScore = Math.max(0, 100 - maxQueueLength * 10);
+  return waitScore * 0.4 + utilScore * 0.4 + queueScore * 0.2;
+};
+
+export const findRecommendedScenario = (scenarios) => {
+  if (scenarios.length === 0) return null;
+  return scenarios.reduce((best, current) =>
+    calculateScore(current) > calculateScore(best) ? current : best
+  );
+};
+
+export const findMaxDiffHours = (currentData, compareScenario) => {
+  if (!currentData || !compareScenario?.waitTimeData || currentData.length === 0) {
+    return [];
+  }
+
+  const compareMap = new Map(
+    compareScenario.waitTimeData.map((d) => [d.time, d.waitTime])
+  );
+
+  let maxDiff = 0;
+  const diffs = currentData.map((d) => {
+    const compareVal = compareMap.get(d.time) || 0;
+    const diff = Math.abs(d.waitTime - compareVal);
+    maxDiff = Math.max(maxDiff, diff);
+    return { time: d.time, diff };
+  });
+
+  const threshold = maxDiff * 0.7;
+  return diffs
+    .filter((d) => d.diff >= threshold && d.diff > 0)
+    .map((d) => d.time);
+};

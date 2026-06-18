@@ -36,7 +36,7 @@ const QueueChartPanel = ({
   const lineConfigs = buildQueueLineConfigs(currentName, compareScenarios);
 
   return (
-    <div className="chart-panel">
+    <div className="chart-panel" id="chart-queue">
       <h2>队列与坐席状态</h2>
       <div className="chart-container">
         <ResponsiveContainer width="100%" height={300}>

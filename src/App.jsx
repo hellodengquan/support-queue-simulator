@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import ControlPanel from './components/ControlPanel';
 import StatsPanel from './components/StatsPanel';
 import ChartPanel from './components/ChartPanel';
 import QueueChartPanel from './components/QueueChartPanel';
 import ScenarioList from './components/ScenarioList';
+import ExportPanel from './components/ExportPanel';
 import { runSimulation } from './utils/simulator';
 import {
   getScenarios,
@@ -26,6 +27,7 @@ function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [scenarios, setScenarios] = useState([]);
   const [selectedScenarioIds, setSelectedScenarioIds] = useState([]);
+  const rightPanelRef = useRef(null);
 
   useEffect(() => {
     setScenarios(getScenarios());
@@ -84,12 +86,23 @@ function App() {
   );
 
   const currentName = stats ? formatScenarioName(params) : null;
+  const exportTitle = currentName || '模拟结果';
 
   return (
     <div className="app">
       <header className="app-header">
-        <h1>客服排班模拟器</h1>
-        <p className="subtitle">模拟工单到达，计算容量，优化排班决策</p>
+        <div className="header-top">
+          <div className="header-title">
+            <h1>客服排班模拟器</h1>
+            <p className="subtitle">模拟工单到达，计算容量，优化排班决策</p>
+          </div>
+          <div className="header-actions">
+            <ExportPanel
+              targetId=".right-panel"
+              title={exportTitle}
+            />
+          </div>
+        </div>
       </header>
 
       <main className="app-main">
@@ -111,7 +124,7 @@ function App() {
           />
         </div>
 
-        <div className="right-panel">
+        <div className="right-panel" ref={rightPanelRef}>
           <StatsPanel stats={stats} compareScenarios={selectedScenarios} />
           <ChartPanel
             currentData={stats?.waitTimeData}

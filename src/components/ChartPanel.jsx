@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -7,7 +8,9 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  ReferenceArea,
 } from 'recharts';
+import { findMaxDiffHours } from '../utils/scenarioManager';
 
 const formatYAxis = (value) => {
   if (value < 60) {
@@ -38,6 +41,13 @@ const CustomTooltip = ({ active, payload, label }) => {
 const ChartPanel = ({ currentData, currentName, compareScenarios }) => {
   const hasData = (currentData && currentData.length > 0) || compareScenarios.length > 0;
 
+  const highlightHours = useMemo(() => {
+    if (compareScenarios.length > 0 && currentData) {
+      return findMaxDiffHours(currentData, compareScenarios[0]);
+    }
+    return [];
+  }, [currentData, compareScenarios]);
+
   if (!hasData) {
     return (
       <div className="chart-panel">
@@ -51,8 +61,15 @@ const ChartPanel = ({ currentData, currentName, compareScenarios }) => {
   const lineConfigs = buildLineConfigs(currentName, compareScenarios, 'waitTime');
 
   return (
-    <div className="chart-panel">
-      <h2>等待时长曲线</h2>
+    <div className="chart-panel" id="chart-wait-time">
+      <div className="chart-header">
+        <h2>等待时长曲线</h2>
+        {highlightHours.length > 0 && (
+          <div className="chart-hint">
+            🔴 红色标注: 差异最大时段 (第 {highlightHours.join(', ')} 小时)
+          </div>
+        )}
+      </div>
       <div className="chart-container">
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={mergedData}>
@@ -64,6 +81,20 @@ const ChartPanel = ({ currentData, currentName, compareScenarios }) => {
             <YAxis tickFormatter={formatYAxis} />
             <Tooltip content={<CustomTooltip />} />
             <Legend />
+            {highlightHours.map((hour, idx) => {
+              const x1 = hour - 0.4;
+              const x2 = hour + 0.4;
+              return (
+                <ReferenceArea
+                  key={`hl-${idx}`}
+                  x1={x1}
+                  x2={x2}
+                  strokeOpacity={0.3}
+                  fill="#ff7c7c"
+                  fillOpacity={0.15}
+                />
+              );
+            })}
             {lineConfigs.map((config) => (
               <Line
                 key={config.dataKey}
@@ -73,7 +104,22 @@ const ChartPanel = ({ currentData, currentName, compareScenarios }) => {
                 name={config.name}
                 strokeWidth={config.isCurrent ? 3 : 2}
                 strokeDasharray={config.isCurrent ? '' : '5 5'}
-                dot={false}
+                dot={(props) => {
+                  const { cx, cy, payload } = props;
+                  if (highlightHours.includes(payload.time)) {
+                    return (
+                      <circle
+                        cx={cx}
+                        cy={cy}
+                        r={5}
+                        fill={config.color}
+                        stroke="#ff7c7c"
+                        strokeWidth={2}
+                      />
+                    );
+                  }
+                  return null;
+                }}
               />
             ))}
           </LineChart>
