@@ -27,6 +27,7 @@ function App() {
   const [isRunning, setIsRunning] = useState(false);
   const [scenarios, setScenarios] = useState([]);
   const [selectedScenarioIds, setSelectedScenarioIds] = useState([]);
+  const [isExportPrintMode, setIsExportPrintMode] = useState(false);
   const rightPanelRef = useRef(null);
 
   useEffect(() => {
@@ -101,6 +102,9 @@ function App() {
               targetId=".right-panel"
               title={exportTitle}
               disabled={isRunning || !stats}
+              selectedScenariosCount={selectedScenarios.length}
+              onBeforePrintCapture={() => setIsExportPrintMode(true)}
+              onAfterPrintCapture={() => setIsExportPrintMode(false)}
             />
           </div>
         </div>
@@ -125,18 +129,20 @@ function App() {
           />
         </div>
 
-        <div className="right-panel" ref={rightPanelRef}>
+        <div className={`right-panel ${isExportPrintMode ? 'export-print-mode' : ''}`} ref={rightPanelRef}>
           <StatsPanel stats={stats} compareScenarios={selectedScenarios} />
           <ChartPanel
             currentData={stats?.waitTimeData}
             currentName={currentName}
             compareScenarios={selectedScenarios}
+            isPrintMode={isExportPrintMode}
           />
           <QueueChartPanel
             currentQueueData={stats?.queueLengthData}
             currentUtilData={stats?.agentUtilData}
             currentName={currentName}
             compareScenarios={selectedScenarios}
+            isPrintMode={isExportPrintMode}
           />
         </div>
       </main>

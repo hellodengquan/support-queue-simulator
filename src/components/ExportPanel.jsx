@@ -73,7 +73,16 @@ const canvasToBlob = (canvas, type = 'image/png', quality = 0.95) => {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-const ExportPanel = ({ targetId, title, disabled = false }) => {
+const MAX_COMPARE_SCENARIOS = 3;
+
+const ExportPanel = ({
+  targetId,
+  title,
+  disabled = false,
+  selectedScenariosCount = 0,
+  onBeforePrintCapture,
+  onAfterPrintCapture,
+}) => {
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressText, setProgressText] = useState('');
@@ -82,8 +91,9 @@ const ExportPanel = ({ targetId, title, disabled = false }) => {
   useEffect(() => {
     return () => {
       exportInProgressRef.current = false;
+      if (onAfterPrintCapture) onAfterPrintCapture();
     };
-  }, []);
+  }, [onAfterPrintCapture]);
 
   const getFilename = (ext) => {
     const safeTitle = (title || '模拟结果').replace(/[\\/:*?"<>|]/g, '_');
@@ -96,7 +106,19 @@ const ExportPanel = ({ targetId, title, disabled = false }) => {
       document.querySelector(targetId) || document.querySelector('.right-panel');
     if (!element) return null;
 
-    const scale = forPrint ? PRINT_SCALE : Math.max(DPR_SCALE, 2);
+    const scenarioCount = Math.max(1, selectedScenariosCount + 1);
+    let scale;
+    if (forPrint) {
+      if (scenarioCount <= 2) {
+        scale = PRINT_SCALE;
+      } else if (scenarioCount <= 4) {
+        scale = 2.5;
+      } else {
+        scale = 2;
+      }
+    } else {
+      scale = Math.max(DPR_SCALE, 2);
+    }
 
     setProgress(5);
     setProgressText('准备导出区域...');
@@ -115,8 +137,25 @@ const ExportPanel = ({ targetId, title, disabled = false }) => {
         await sleep(100);
       }
 
-      setProgress(15);
-      setProgressText('渲染高清画布...');
+      setProgress(12);
+      setProgressText('调整图表为打印模式...');
+      await sleep(30);
+
+      if (forPrint && onBeforePrintCapture) {
+        onBeforePrintCapture();
+        await sleep(300);
+      }
+
+      const updatedRect = element.getBoundingClientRect();
+      const estimatedPixels = updatedRect.width * updatedRect.height * scale * scale;
+      const estimatedMB = (estimatedPixels * 4) / (1024 * 1024);
+
+      setProgress(18);
+      if (estimatedMB > 40) {
+        setProgressText(`画布较大 (≈${estimatedMB.toFixed(0)}MB)，请稍候...`);
+      } else {
+        setProgressText('渲染高清画布...');
+      }
       await sleep(30);
 
       const canvas = await html2canvas(element, {
@@ -148,6 +187,7 @@ const ExportPanel = ({ targetId, title, disabled = false }) => {
       return canvas;
     } catch (err) {
       window.scrollTo({ top: originalScrollY, behavior: 'auto' });
+      if (onAfterPrintCapture) onAfterPrintCapture();
       throw err;
     }
   };
@@ -178,6 +218,14 @@ const ExportPanel = ({ targetId, title, disabled = false }) => {
 
   const handleExportPNG = async () => {
     if (isExporting || disabled) return;
+
+    if (selectedScenariosCount > MAX_COMPARE_SCENARIOS) {
+      const confirmed = window.confirm(
+        `已选择 ${selectedScenariosCount} 个对比场景，建议不超过 ${MAX_COMPARE_SCENARIOS} 个以保证导出质量。是否继续？`
+      );
+      if (!confirmed) return;
+    }
+
     setIsExporting(true);
     exportInProgressRef.current = true;
 
@@ -209,11 +257,20 @@ const ExportPanel = ({ targetId, title, disabled = false }) => {
       setProgress(0);
       setProgressText('');
       exportInProgressRef.current = false;
+      if (onAfterPrintCapture) onAfterPrintCapture();
     }
   };
 
   const handleExportPDF = async () => {
     if (isExporting || disabled) return;
+
+    if (selectedScenariosCount > MAX_COMPARE_SCENARIOS) {
+      const confirmed = window.confirm(
+        `已选择 ${selectedScenariosCount} 个对比场景，PDF导出建议不超过 ${MAX_COMPARE_SCENARIOS} 个以避免内存溢出。是否继续？`
+      );
+      if (!confirmed) return;
+    }
+
     setIsExporting(true);
     exportInProgressRef.current = true;
 
@@ -320,6 +377,7 @@ const ExportPanel = ({ targetId, title, disabled = false }) => {
       setProgress(0);
       setProgressText('');
       exportInProgressRef.current = false;
+      if (onAfterPrintCapture) onAfterPrintCapture();
     }
   };
 

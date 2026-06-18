@@ -602,3 +602,47 @@
   border: 1px solid #ffd4d4;
 }
 
+.right-panel.export-print-mode {
+  padding: 20px 24px;
+  background: #ffffff;
+}
+
+.right-panel.export-print-mode .stats-panel,
+.right-panel.export-print-mode .chart-panel {
+  padding: 16px 20px;
+  margin-bottom: 14px;
+  box-shadow: none;
+  border: 1px solid #e8e8e8;
+}
+
+.right-panel.export-print-mode .stats-panel h2,
+.right-panel.export-print-mode .chart-panel h2 {
+  font-size: 1.35rem;
+  margin-bottom: 14px;
+}
+
+.right-panel.export-print-mode .chart-panel .chart-container {
+  padding-top: 4px;
+}
+
+.right-panel.export-print-mode .stats-grid {
+  gap: 10px;
+}
+
+.right-panel.export-print-mode .stat-card {
+  padding: 12px 14px;
+}
+
+.right-panel.export-print-mode .stat-value {
+  font-size: 1.55rem;
+}
+
+.right-panel.export-print-mode .stat-label {
+  font-size: 0.9rem;
+}
+
+.right-panel.export-print-mode .chart-hint {
+  font-size: 0.9rem;
+  padding: 8px 14px;
+}
+

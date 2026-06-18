@@ -38,7 +38,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const ChartPanel = ({ currentData, currentName, compareScenarios }) => {
+const ChartPanel = ({ currentData, currentName, compareScenarios, isPrintMode = false }) => {
   const hasData = (currentData && currentData.length > 0) || compareScenarios.length > 0;
 
   const highlightHours = useMemo(() => {
@@ -60,6 +60,13 @@ const ChartPanel = ({ currentData, currentName, compareScenarios }) => {
   const mergedData = mergeWaitTimeData(currentData, currentName, compareScenarios);
   const lineConfigs = buildLineConfigs(currentName, compareScenarios, 'waitTime');
 
+  const chartHeight = isPrintMode ? 380 : 300;
+  const tickFontSize = isPrintMode ? 14 : 12;
+  const labelFontSize = isPrintMode ? 14 : 12;
+  const strokeWidthBase = isPrintMode ? 1.5 : 0;
+  const dotRadius = isPrintMode ? 7 : 5;
+  const legendFontSize = isPrintMode ? 13 : 12;
+
   return (
     <div className="chart-panel" id="chart-wait-time">
       <div className="chart-header">
@@ -71,16 +78,33 @@ const ChartPanel = ({ currentData, currentName, compareScenarios }) => {
         )}
       </div>
       <div className="chart-container">
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={chartHeight}>
           <LineChart data={mergedData}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" stroke={isPrintMode ? '#d0d0d0' : '#e0e0e0'} />
             <XAxis
               dataKey="time"
-              label={{ value: '时间 (小时)', position: 'insideBottom', offset: -5 }}
+              tick={{ fontSize: tickFontSize }}
+              label={{
+                value: '时间 (小时)',
+                position: 'insideBottom',
+                offset: -5,
+                style: { fontSize: labelFontSize },
+              }}
             />
-            <YAxis tickFormatter={formatYAxis} />
+            <YAxis
+              tickFormatter={formatYAxis}
+              tick={{ fontSize: tickFontSize }}
+              label={{
+                style: { fontSize: labelFontSize },
+              }}
+            />
             <Tooltip content={<CustomTooltip />} />
-            <Legend />
+            <Legend
+              wrapperStyle={{
+                fontSize: legendFontSize,
+                paddingTop: '10px',
+              }}
+            />
             {highlightHours.map((hour, idx) => {
               const x1 = hour - 0.4;
               const x2 = hour + 0.4;
@@ -89,9 +113,9 @@ const ChartPanel = ({ currentData, currentName, compareScenarios }) => {
                   key={`hl-${idx}`}
                   x1={x1}
                   x2={x2}
-                  strokeOpacity={0.3}
+                  strokeOpacity={isPrintMode ? 0.5 : 0.3}
                   fill="#ff7c7c"
-                  fillOpacity={0.15}
+                  fillOpacity={isPrintMode ? 0.25 : 0.15}
                 />
               );
             })}
@@ -102,7 +126,7 @@ const ChartPanel = ({ currentData, currentName, compareScenarios }) => {
                 dataKey={config.dataKey}
                 stroke={config.color}
                 name={config.name}
-                strokeWidth={config.isCurrent ? 3 : 2}
+                strokeWidth={(config.isCurrent ? 3 : 2) + strokeWidthBase}
                 strokeDasharray={config.isCurrent ? '' : '5 5'}
                 dot={(props) => {
                   const { cx, cy, payload } = props;
@@ -111,10 +135,10 @@ const ChartPanel = ({ currentData, currentName, compareScenarios }) => {
                       <circle
                         cx={cx}
                         cy={cy}
-                        r={5}
+                        r={dotRadius}
                         fill={config.color}
                         stroke="#ff7c7c"
-                        strokeWidth={2}
+                        strokeWidth={isPrintMode ? 3 : 2}
                       />
                     );
                   }

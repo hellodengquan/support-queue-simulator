@@ -14,6 +14,7 @@ const QueueChartPanel = ({
   currentUtilData,
   currentName,
   compareScenarios,
+  isPrintMode = false,
 }) => {
   const hasData =
     (currentQueueData && currentQueueData.length > 0) || compareScenarios.length > 0;
@@ -35,28 +36,57 @@ const QueueChartPanel = ({
   );
   const lineConfigs = buildQueueLineConfigs(currentName, compareScenarios);
 
+  const chartHeight = isPrintMode ? 380 : 300;
+  const tickFontSize = isPrintMode ? 14 : 12;
+  const labelFontSize = isPrintMode ? 14 : 12;
+  const strokeWidthBase = isPrintMode ? 1.5 : 0;
+  const legendFontSize = isPrintMode ? 13 : 12;
+
   return (
     <div className="chart-panel" id="chart-queue">
       <h2>队列与坐席状态</h2>
       <div className="chart-container">
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={chartHeight}>
           <LineChart data={mergedData}>
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid strokeDasharray="3 3" stroke={isPrintMode ? '#d0d0d0' : '#e0e0e0'} />
             <XAxis
               dataKey="time"
-              label={{ value: '时间 (小时)', position: 'insideBottom', offset: -5 }}
+              tick={{ fontSize: tickFontSize }}
+              label={{
+                value: '时间 (小时)',
+                position: 'insideBottom',
+                offset: -5,
+                style: { fontSize: labelFontSize },
+              }}
             />
             <YAxis
               yAxisId="left"
-              label={{ value: '队列长度', angle: -90, position: 'insideLeft' }}
+              tick={{ fontSize: tickFontSize }}
+              label={{
+                value: '队列长度',
+                angle: -90,
+                position: 'insideLeft',
+                style: { fontSize: labelFontSize },
+              }}
             />
             <YAxis
               yAxisId="right"
               orientation="right"
-              label={{ value: '利用率 (%)', angle: 90, position: 'insideRight' }}
+              tick={{ fontSize: tickFontSize }}
+              label={{
+                value: '利用率 (%)',
+                angle: 90,
+                position: 'insideRight',
+                style: { fontSize: labelFontSize },
+              }}
             />
             <Tooltip />
-            <Legend />
+            <Legend
+              wrapperStyle={{
+                fontSize: legendFontSize,
+                paddingTop: '10px',
+              }}
+            />
             {lineConfigs.map((config) => (
               <Line
                 key={config.dataKey}
@@ -65,7 +95,7 @@ const QueueChartPanel = ({
                 dataKey={config.dataKey}
                 stroke={config.color}
                 name={config.name}
-                strokeWidth={config.isCurrent ? 3 : 2}
+                strokeWidth={(config.isCurrent ? 3 : 2) + strokeWidthBase}
                 strokeDasharray={config.isCurrent ? '' : '5 5'}
                 dot={false}
               />
